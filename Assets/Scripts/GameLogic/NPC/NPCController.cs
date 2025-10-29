@@ -107,29 +107,14 @@ public class NPCController : MonoBehaviour
 
     private Move EasyMove(PieceType[,] board)
     {
-        List<(int, int)> emptyPlaces = gameController.FindEmptyPlaces(board);
-
-        Move move = new Move();
-        move = GetRandomMove(emptyPlaces);
-
-        return move;
+        // Soft, mistake-prone behavior: often avoid best move and sometimes play fully random
+        return ChooseMoveWithSampling(board, temperature: 2.5f, avoidBestProbability: 0.7f, randomMoveProbability: 0.3f);
     }
 
     private Move MediumMove(PieceType[,] board)
     {
-        Move move = new Move();
-
-        if (Random.Range(0, 100 + 1) <= mediumHardnessProbability)
-        {
-            move = miniMax.FindBestMove(board, true);
-        }
-        else
-        {
-            List<(int, int)> emptyPlaces = gameController.FindEmptyPlaces(board);
-            move = GetRandomMove(emptyPlaces);
-        }
-
-        return move;
+        // 미니멕스 알고리즘의 손실률을 허물하게 만들어서 난이도를 급격히 낮추는 작업. 하기 싫노 하
+        return ChooseMoveWithSampling(board, temperature: 1.2f, avoidBestProbability: 0.4f, randomMoveProbability: 0.1f);
     }
 
     private Move HardMove(PieceType[,] board)
@@ -164,5 +149,91 @@ public class NPCController : MonoBehaviour
         Move move = new Move(emptyPlaces[index].Item1, emptyPlaces[index].Item2);
 
         return move;
+    }
+
+    private Move ChooseMoveWithSampling(PieceType[,] board, float temperature, float avoidBestProbability, float randomMoveProbability)
+    {
+        List<(int, int)> emptyPlaces = gameController.FindEmptyPlaces(board);
+        if (emptyPlaces.Count == 0)
+        {
+            return new Move();
+        }
+
+        
+        if (Random.value < Mathf.Clamp01(randomMoveProbability))
+        {
+            return GetRandomMove(emptyPlaces);
+        }
+
+        // 알고리즘을 사용한 미니멕스 트리 점수 계산
+        List<(int, int, float)> valued = new List<(int, int, float)>();
+        float maxValue = -Mathf.Infinity;
+        int bestR = -1;
+        int bestC = -1;
+        for (int i = 0; i < emptyPlaces.Count; i++)
+        {
+            int r = emptyPlaces[i].Item1;
+            int c = emptyPlaces[i].Item2;
+            float v = miniMax.EvaluateMove(board, r, c, true);
+            valued.Add((r, c, v));
+            if (v > maxValue)
+            {
+                maxValue = v;
+                bestR = r;
+                bestC = c;
+            }
+        }
+
+        // 온도 변화에 따른 소프트맥스 분배
+        float denom = 0f;
+        float maxForStability = maxValue;
+        for (int i = 0; i < valued.Count; i++)
+        {
+            float z = Mathf.Exp((valued[i].Item3 - maxForStability) / Mathf.Max(0.001f, temperature));
+            denom += z;
+            valued[i] = (valued[i].Item1, valued[i].Item2, z);
+        }
+        if (denom <= 0f)
+        {
+
+            return new Move(bestR, bestC);
+        }
+
+        // 최고 난이도. 좌호빈은 못함. 최적수를 계산해서 계산량을 극대화. 즉 절대 안짐
+        bool avoidBest = Random.value < Mathf.Clamp01(avoidBestProbability);
+        float adjustedDenom = 0f;
+        if (avoidBest)
+        {
+            for (int i = 0; i < valued.Count; i++)
+            {
+                if (valued[i].Item1 == bestR && valued[i].Item2 == bestC)
+                {
+                    valued[i] = (valued[i].Item1, valued[i].Item2, 0f);
+                }
+                adjustedDenom += valued[i].Item3;
+            }
+            if (adjustedDenom <= 0f)
+            {
+                return GetRandomMove(emptyPlaces);
+            }
+        }
+        else
+        {
+            adjustedDenom = denom;
+        }
+
+        float target = Random.value;
+        float acc = 0f;
+        for (int i = 0; i < valued.Count; i++)
+        {
+            float p = valued[i].Item3 / adjustedDenom;
+            acc += p;
+            if (target <= acc)
+            {
+                return new Move(valued[i].Item1, valued[i].Item2);
+            }
+        }
+
+        return new Move(bestR, bestC);
     }
 }
