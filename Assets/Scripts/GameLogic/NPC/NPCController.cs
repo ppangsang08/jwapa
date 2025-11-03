@@ -5,10 +5,13 @@ using UnityEngine;
 using static DifficultyManager;
 using Random = UnityEngine.Random;
 
+
+
 [RequireComponent(typeof(MiniMax))]
 [RequireComponent(typeof(GameController))]
 public class NPCController : MonoBehaviour
 {
+    [SerializeField] private MinimaxDebugger minimaxDebugger;
     internal Difficulties Difficulty { private get; set;  }
 
     [Tooltip("Value in %")]
@@ -77,6 +80,16 @@ public class NPCController : MonoBehaviour
         for (int i = 0; i < valued.Count; i++)
         {
             valued[i] = (valued[i].Item1, valued[i].Item2, valued[i].Item3 / denom);
+        }
+        if (minimaxDebugger != null)
+        {
+            string txt = "=== Minimax 평가 ===\n";
+            foreach (var p in valued)
+            {
+                txt += $"({p.Item1}, {p.Item2}) → value={p.Item3:F2}\n";
+            }
+            txt += $"Best Move: ({bestMove.row}, {bestMove.col})";
+            minimaxDebugger.UpdateText(txt);
         }
         return valued;
     }

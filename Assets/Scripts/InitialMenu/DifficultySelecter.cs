@@ -11,10 +11,6 @@ public class DifficultySelecter : MonoBehaviour
 
     [SerializeField]
     private Text label;
-    [SerializeField]
-    private Color mandatoryFieldColor;
-    [SerializeField]
-    private Color defaultColor;
     
     private Dropdown dropdown;
 
@@ -42,14 +38,5 @@ public class DifficultySelecter : MonoBehaviour
     {
         OnDifficultySelected?.Invoke(newIndex);
         DifficultyManager.Instance.SetSelectedDifficulty(newIndex);
-
-        if (newIndex == 0)
-        {
-            label.color = mandatoryFieldColor;
-        }
-        else
-        {
-            label.color = defaultColor;
-        }
     }
 }

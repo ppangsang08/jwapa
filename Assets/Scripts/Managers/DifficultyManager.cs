@@ -21,7 +21,7 @@ public class DifficultyManager : GenericSingleton<DifficultyManager>
 
     internal List<string> GetDifficulties()
     {
-        return new List<string> { "처 골라라", "ㅈㄴ쉬움", "아마도 보통", "좌호빈은 못함" };
+        return new List<string> {"ㅈㄴ쉬움", "아마도 보통", "좌의 한수(불가능)"};
     }
 
     internal void SetSelectedDifficulty(int t)
@@ -33,10 +33,9 @@ public class DifficultyManager : GenericSingleton<DifficultyManager>
     {
         switch (SelectedDifficulty)
         {
-            case Difficulties.None: return "처 골라라";
             case Difficulties.Easy: return "ㅈㄴ쉬움";
             case Difficulties.Medium: return "아마도 보통";
-            case Difficulties.Hard: return "좌호빈은 못함";
+            case Difficulties.Hard: return "좌의 한수(불가능)";
             default: return "없음";
         }
     }

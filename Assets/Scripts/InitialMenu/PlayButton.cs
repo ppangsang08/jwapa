@@ -28,17 +28,9 @@ public class PlayButton : MonoBehaviour
     {
         button.interactable = b;
     }
-
-    private void DifficultyUpdated(int i)
+    private void DifficultyUpdated(int newDifficultyIndex)
     {
-        if(i <= 0)
-        {
-            SetInteractable(false);
-        }
-        else
-        {
-            SetInteractable(true);
-        }
+        SetInteractable(true);
     }
 
     private void OnDestroy()
