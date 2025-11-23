@@ -44,6 +44,8 @@ public class WinManager : GenericSingleton<WinManager>
     internal class EvaluationData
     {
         public List<float> minimaxValues = new List<float>();
+    // stores the minimax value of the best (optimal) move found during evaluation
+    public List<float> bestMinimaxValues = new List<float>();
         public List<int> maxDepths = new List<int>();
         public List<int> nodeCounts = new List<int>();
         public List<float> optimalityRatios = new List<float>();
@@ -62,6 +64,14 @@ public class WinManager : GenericSingleton<WinManager>
             float sum = 0f;
             foreach (var v in minimaxValues) sum += v;
             return sum / minimaxValues.Count;
+        }
+
+        public float GetAverageBestMinimaxValue()
+        {
+            if (bestMinimaxValues == null || bestMinimaxValues.Count == 0) return 0f;
+            float sum = 0f;
+            foreach (var v in bestMinimaxValues) sum += v;
+            return sum / bestMinimaxValues.Count;
         }
 
         public float GetAverageMaxDepth()

@@ -493,6 +493,8 @@ public class GameController : MonoBehaviour
 
         // 평가 데이터 저장
         WinManager.Instance.PlayerEval.minimaxValues.Add(currentEval.minimaxValue);
+    // store also the optimal (best) move's minimax value so we can show what the position's optimal value was
+    WinManager.Instance.PlayerEval.bestMinimaxValues.Add(bestEval.minimaxValue);
         WinManager.Instance.PlayerEval.maxDepths.Add(currentEval.maxDepth);
         WinManager.Instance.PlayerEval.nodeCounts.Add(currentEval.nodeCount);
 
@@ -538,6 +540,8 @@ public class GameController : MonoBehaviour
 
         // 평가 데이터 저장
         WinManager.Instance.NPCEval.minimaxValues.Add(currentEval.minimaxValue);
+    // store also the optimal (best) move's minimax value for NPC
+    WinManager.Instance.NPCEval.bestMinimaxValues.Add(bestEval.minimaxValue);
         WinManager.Instance.NPCEval.maxDepths.Add(currentEval.maxDepth);
         WinManager.Instance.NPCEval.nodeCounts.Add(currentEval.nodeCount);
 
