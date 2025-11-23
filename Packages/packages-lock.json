@@ -66,7 +66,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.burst": {
-      "version": "1.8.18",
+      "version": "1.8.19",
       "depth": 2,
       "source": "registry",
       "dependencies": {
@@ -85,9 +85,8 @@
     "com.unity.ext.nunit": {
       "version": "2.0.5",
       "depth": 1,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://packages.unity.com"
+      "source": "builtin",
+      "dependencies": {}
     },
     "com.unity.ide.rider": {
       "version": "3.0.31",
@@ -130,15 +129,14 @@
       }
     },
     "com.unity.test-framework": {
-      "version": "1.4.5",
+      "version": "1.5.1",
       "depth": 1,
-      "source": "registry",
+      "source": "builtin",
       "dependencies": {
         "com.unity.ext.nunit": "2.0.3",
         "com.unity.modules.imgui": "1.0.0",
         "com.unity.modules.jsonserialize": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
+      }
     },
     "com.unity.timeline": {
       "version": "1.8.7",

@@ -19,6 +19,13 @@ public abstract class GenericSingleton<T> : MonoBehaviour where T: GenericSingle
 
     private void Awake()
     {
+        // 싱글톤 중복 방지
+        if (_instance != null && _instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         // 싱글톤 초기화
         _instance = (T) this;
 

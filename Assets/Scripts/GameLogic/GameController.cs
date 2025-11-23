@@ -51,6 +51,9 @@ public class GameController : MonoBehaviour
             slots = GetComponentsInChildren<Slot>(true);
         }
 
+        // 평가 데이터 초기화
+        WinManager.Instance.ResetEvaluations();
+
         RandomPlayerSelecter();
     }
 
@@ -106,6 +109,10 @@ public class GameController : MonoBehaviour
     private void NPCTurn()
     {
         Move move = npcController.Play(board);
+        
+        // NPC 수의 minimax 평가 (수를 두기 전에 평가)
+        EvaluateMoveForNPC(move);
+        
         board[move.row, move.col] = NPC;
 
         UpdateMapView(move, npcPiece.GetSprite());
@@ -132,6 +139,9 @@ public class GameController : MonoBehaviour
         {
             return;
         }
+
+        // 플레이어 수의 minimax 평가 (수를 두기 전에 평가)
+        EvaluateMoveForPlayer(move);
 
         board[move.row, move.col] = Player;
 
@@ -215,6 +225,10 @@ public class GameController : MonoBehaviour
     private void NPCTurn(Move forcedMove)
     {
         Move move = forcedMove;
+        
+        // NPC 수의 minimax 평가
+        EvaluateMoveForNPC(move);
+        
         board[move.row, move.col] = NPC;
 
         UpdateMapView(move, npcPiece.GetSprite());
@@ -459,6 +473,96 @@ public class GameController : MonoBehaviour
         }
     }
 
+
+    private void EvaluateMoveForPlayer(Move move)
+    {
+        var miniMax = GetComponent<MiniMax>();
+        if (miniMax == null)
+        {
+            Debug.LogWarning("MiniMax 컴포넌트를 찾을 수 없습니다!");
+            return;
+        }
+
+        // 현재 수의 평가 (수를 두기 전 상태에서 평가)
+        MiniMax.MoveEvaluation currentEval;
+        float currentValue = miniMax.EvaluateMoveWithData(board, move.row, move.col, false, out currentEval);
+
+        // 최적 수 찾기
+        MiniMax.MoveEvaluation bestEval;
+        Move bestMove = miniMax.FindBestMoveWithEvaluation(board, false, out bestEval);
+
+        // 평가 데이터 저장
+        WinManager.Instance.PlayerEval.minimaxValues.Add(currentEval.minimaxValue);
+        WinManager.Instance.PlayerEval.maxDepths.Add(currentEval.maxDepth);
+        WinManager.Instance.PlayerEval.nodeCounts.Add(currentEval.nodeCount);
+
+        Debug.Log($"플레이어 수 평가: ({move.row}, {move.col}) - Minimax값: {currentEval.minimaxValue}, 최적값: {bestEval.minimaxValue}, 깊이: {currentEval.maxDepth}, 노드: {currentEval.nodeCount}");
+
+        // 최적 수 대비 효율성 계산
+        if (Mathf.Abs(bestEval.minimaxValue) > 0.01f) // 0이 아닌 경우
+        {
+            float optimalityRatio = currentEval.minimaxValue / bestEval.minimaxValue;
+            WinManager.Instance.PlayerEval.optimalityRatios.Add(optimalityRatio);
+            Debug.Log($"플레이어 최적성 비율: {optimalityRatio:F2} ({currentEval.minimaxValue} / {bestEval.minimaxValue})");
+        }
+        else if (Mathf.Abs(currentEval.minimaxValue) < 0.01f && Mathf.Abs(bestEval.minimaxValue) < 0.01f)
+        {
+            // 둘 다 0에 가까우면 최적 (무승부 상태)
+            WinManager.Instance.PlayerEval.optimalityRatios.Add(1.0f);
+            Debug.Log($"플레이어 최적성 비율: 1.0 (둘 다 무승부 상태)");
+        }
+        else
+        {
+            // 최적이 아닌 경우
+            WinManager.Instance.PlayerEval.optimalityRatios.Add(0.0f);
+            Debug.Log($"플레이어 최적성 비율: 0.0 (최적이 아님)");
+        }
+    }
+
+    private void EvaluateMoveForNPC(Move move)
+    {
+        var miniMax = GetComponent<MiniMax>();
+        if (miniMax == null)
+        {
+            Debug.LogWarning("MiniMax 컴포넌트를 찾을 수 없습니다!");
+            return;
+        }
+
+        // 현재 수의 평가 (수를 두기 전 상태에서 평가)
+        MiniMax.MoveEvaluation currentEval;
+        float currentValue = miniMax.EvaluateMoveWithData(board, move.row, move.col, true, out currentEval);
+
+        // 최적 수 찾기
+        MiniMax.MoveEvaluation bestEval;
+        Move bestMove = miniMax.FindBestMoveWithEvaluation(board, true, out bestEval);
+
+        // 평가 데이터 저장
+        WinManager.Instance.NPCEval.minimaxValues.Add(currentEval.minimaxValue);
+        WinManager.Instance.NPCEval.maxDepths.Add(currentEval.maxDepth);
+        WinManager.Instance.NPCEval.nodeCounts.Add(currentEval.nodeCount);
+
+        Debug.Log($"NPC 수 평가: ({move.row}, {move.col}) - Minimax값: {currentEval.minimaxValue}, 최적값: {bestEval.minimaxValue}, 깊이: {currentEval.maxDepth}, 노드: {currentEval.nodeCount}");
+
+        // 최적 수 대비 효율성 계산
+        if (Mathf.Abs(bestEval.minimaxValue) > 0.01f) // 0이 아닌 경우
+        {
+            float optimalityRatio = currentEval.minimaxValue / bestEval.minimaxValue;
+            WinManager.Instance.NPCEval.optimalityRatios.Add(optimalityRatio);
+            Debug.Log($"NPC 최적성 비율: {optimalityRatio:F2} ({currentEval.minimaxValue} / {bestEval.minimaxValue})");
+        }
+        else if (Mathf.Abs(currentEval.minimaxValue) < 0.01f && Mathf.Abs(bestEval.minimaxValue) < 0.01f)
+        {
+            // 둘 다 0에 가까우면 최적 (무승부 상태)
+            WinManager.Instance.NPCEval.optimalityRatios.Add(1.0f);
+            Debug.Log($"NPC 최적성 비율: 1.0 (둘 다 무승부 상태)");
+        }
+        else
+        {
+            // 최적이 아닌 경우
+            WinManager.Instance.NPCEval.optimalityRatios.Add(0.0f);
+            Debug.Log($"NPC 최적성 비율: 0.0 (최적이 아님)");
+        }
+    }
 
     private void PrintMap()
     {
