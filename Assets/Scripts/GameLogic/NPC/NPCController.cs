@@ -120,8 +120,8 @@ public class NPCController : MonoBehaviour
 
     private Move EasyMove(PieceType[,] board)
     {
-        // Soft, mistake-prone behavior: often avoid best move and sometimes play fully random
-        return ChooseMoveWithSampling(board, temperature: 2.5f, avoidBestProbability: 0.7f, randomMoveProbability: 0.3f);
+    // 약하게(실수 잦음) 둠 — 최적수 피하거나 가끔 랜덤
+    return ChooseMoveWithSampling(board, temperature: 2.5f, avoidBestProbability: 0.7f, randomMoveProbability: 0.3f);
     }
 
     private Move MediumMove(PieceType[,] board)

@@ -31,8 +31,7 @@ public class WinManager : GenericSingleton<WinManager>
     internal EvaluationData NPCEval { get; private set; } = new EvaluationData();
 
     /// <summary>
-    /// Reset / clear evaluation data before a new game.
-    /// Called from GameController.Awake()
+    /// 새 게임 전 평가 데이터 초기화함 (GameController.Awake에서 호출)
     /// </summary>
     internal void ResetEvaluations()
     {
@@ -40,11 +39,11 @@ public class WinManager : GenericSingleton<WinManager>
         NPCEval.Reset();
     }
 
-    // Simple container for collected minimax evaluation metrics
+    // 평가 데이터 담는 컨테이너
     internal class EvaluationData
     {
         public List<float> minimaxValues = new List<float>();
-    // stores the minimax value of the best (optimal) move found during evaluation
+    // 최적 수의 minimax 값도 보관함
     public List<float> bestMinimaxValues = new List<float>();
         public List<int> maxDepths = new List<int>();
         public List<int> nodeCounts = new List<int>();
@@ -99,12 +98,11 @@ public class WinManager : GenericSingleton<WinManager>
         }
     }
 
-    // Ensure this manager persists across scene loads so collected evaluation data
-    // remains available on the final scene.
+    // 씬 전환해도 이 매니저는 유지되어 평가 데이터가 남아있게 함
     internal override void Init()
     {
         DontDestroyOnLoad(gameObject);
-        // optional debug to confirm persistence; harmless if left in
+    // (디버그) 유지 확인용 로그
         Debug.Log("WinManager initialized and set to DontDestroyOnLoad");
     }
 }

@@ -11,11 +11,11 @@ public abstract class GenericSingleton<T> : MonoBehaviour where T: GenericSingle
         {
             if (_instance == null)
             {
-                // try to locate an existing instance in the scene
+                // 씬에서 기존 인스턴스 찾아봄
                 _instance = FindObjectOfType<T>();
                 if (_instance == null)
                 {
-                    // if none found, create a new GameObject and attach the singleton
+                    // 없으면 새 GameObject 만들고 싱글턴 붙임
                     var go = new GameObject(typeof(T).Name + " (Singleton)");
                     _instance = go.AddComponent<T>();
                     Debug.Log($"[GenericSingleton] No instance of {typeof(T).Name} found — created new singleton GameObject.");

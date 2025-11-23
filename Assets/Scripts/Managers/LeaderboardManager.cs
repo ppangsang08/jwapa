@@ -26,7 +26,7 @@ public class LeaderboardManager : GenericSingleton<LeaderboardManager>
 
     internal override void Init()
     {
-        // keep through scenes
+    // 씬 전환 시에도 유지
         DontDestroyOnLoad(gameObject);
         Load();
     }
@@ -80,10 +80,10 @@ public class LeaderboardManager : GenericSingleton<LeaderboardManager>
 
         data.entries.Add(entry);
 
-        // sort descending by score
+    // 점수 내림차순 정렬
         data.entries.Sort((a, b) => b.score.CompareTo(a.score));
 
-        // trim
+    // 최대 항목수만 남기고 잘라냄
         if (data.entries.Count > maxEntries)
         {
             data.entries.RemoveRange(maxEntries, data.entries.Count - maxEntries);
@@ -91,7 +91,7 @@ public class LeaderboardManager : GenericSingleton<LeaderboardManager>
 
         Save();
 
-        // find index of the entry we just added (match by name, score, date)
+    // 방금 추가한 항목의 인덱스 찾음
         int idx = data.entries.FindIndex(e => e.name == name && Mathf.Approximately(e.score, score) && e.date == date);
         if (idx < 0) idx = 0;
         return idx;

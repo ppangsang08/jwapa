@@ -21,7 +21,7 @@ public class UpdateWinner : MonoBehaviour
     [SerializeField]
     private Transform leaderboardParent;
     [SerializeField]
-    private GameObject leaderboardEntryPrefab; // optional prefab with a Text component
+    private GameObject leaderboardEntryPrefab; // 텍스트 포함 프리팹(선택)
     [SerializeField]
     private int leaderboardMax = 10;
 
@@ -31,7 +31,7 @@ public class UpdateWinner : MonoBehaviour
     private void Awake()
     {
         ScoreboardManager.OnDataFromPlayerPrefs += UpdateScoreboardText;
-        // Ensure save button has a listener so it's clickable even if we toggle interactable in code
+    // 저장 버튼 리스너 항상 연결
         if (saveScoreButton != null)
         {
             saveScoreButton.onClick.RemoveListener(SaveSessionScore);
@@ -144,7 +144,7 @@ public class UpdateWinner : MonoBehaviour
             {
                 sb.AppendLine("[플레이어]");
                     sb.AppendLine($"평균 Minimax 값 (선택한 수): {playerEval.GetAverageMinimaxValue():F2}");
-                    // if we recorded optimal/best minimax values, show that too — this indicates the position's true minimax value
+                    // 최적값도 표시(포지션 값 확인용)
                     sb.AppendLine($"평균 최적 Minimax 값: {playerEval.GetAverageBestMinimaxValue():F2}");
                 sb.AppendLine($"평균 트리 깊이: {playerEval.GetAverageMaxDepth():F1}");
                 sb.AppendLine($"평균 노드 수: {playerEval.GetAverageNodeCount():F1}");
@@ -203,7 +203,7 @@ public class UpdateWinner : MonoBehaviour
             }
         }
 
-        // compute session score and append to the text so the minimax panel shows the assigned leaderboard score
+    // 세션 점수 계산해서 패널에 추가
         float sessionScore = ComputeSessionScore(playerEval, npcEval);
         lastSessionScore = sessionScore;
         sb.AppendLine();
@@ -265,7 +265,7 @@ public class UpdateWinner : MonoBehaviour
     {
         if (leaderboardParent == null) return;
 
-        // ensure layout components exist on content to avoid overlap
+    // 레이아웃 컴포넌트 없으면 추가(겹침 방지)
         var vlg = leaderboardParent.GetComponent<VerticalLayoutGroup>();
         if (vlg == null)
         {
@@ -284,7 +284,7 @@ public class UpdateWinner : MonoBehaviour
             csf.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
         }
 
-        // clear existing children
+    // 기존 항목(자식) 전부 제거
         for (int i = leaderboardParent.childCount - 1; i >= 0; i--)
         {
             DestroyImmediate(leaderboardParent.GetChild(i).gameObject);
@@ -310,7 +310,7 @@ public class UpdateWinner : MonoBehaviour
             }
             else
             {
-                // create a simple Text object
+                // 간단한 Text 오브젝트 생성
                 var obj = new GameObject($"Leader_{i + 1}");
                 obj.transform.SetParent(leaderboardParent, false);
                 var txt = obj.AddComponent<Text>();
@@ -324,7 +324,7 @@ public class UpdateWinner : MonoBehaviour
                 go = obj;
             }
 
-            // make sure each child has a LayoutElement to give it height
+            // 항목 높이 위해 LayoutElement 추가
             if (go != null)
             {
                 var le = go.GetComponent<LayoutElement>();
@@ -334,14 +334,14 @@ public class UpdateWinner : MonoBehaviour
             }
         }
 
-        // Force rebuild to ensure layout updates before scrolling
+    // 레이아웃 강제 갱신
         var rt = leaderboardParent as RectTransform;
         if (rt != null)
         {
             LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
         }
 
-        // Auto-scroll: try to show the last saved index if available, otherwise show top
+    // 자동 스크롤(저장된 항목 보이기)
         var scrollRect = leaderboardParent.GetComponentInParent<ScrollRect>();
         if (scrollRect != null)
         {
@@ -352,7 +352,7 @@ public class UpdateWinner : MonoBehaviour
             }
             else if (lastSavedIndex >= 0 && lastSavedIndex < total)
             {
-                // map index to normalized position (0 bottom, 1 top)
+                // 인덱스를 스크롤 위치로 변환
                 float pos = 1f;
                 if (total > 1)
                 {
@@ -362,12 +362,12 @@ public class UpdateWinner : MonoBehaviour
             }
             else
             {
-                // default to top
+                // 기본은 맨 위
                 scrollRect.verticalNormalizedPosition = 1f;
             }
         }
 
-        // reset lastSavedIndex after scrolling
+    // 스크롤 후 저장 인덱스 리셋
         lastSavedIndex = -1;
     }
 
@@ -375,12 +375,6 @@ public class UpdateWinner : MonoBehaviour
     {
         ScoreboardManager.OnDataFromPlayerPrefs -= UpdateScoreboardText;
     }
-
-    // Compute a friendly score (0 < score < 10) based on evaluation metrics.
-    // Heuristics:
-    // - optimality ratio (0..1) is most important
-    // - deeper average search depth and larger node counts increase score (showing effort/complexity)
-    // - relative minimax advantage vs NPC gives a small bonus
     private float ComputeSessionScore(WinManager.EvaluationData playerEval, WinManager.EvaluationData npcEval)
     {
         if (playerEval == null)
@@ -390,22 +384,20 @@ public class UpdateWinner : MonoBehaviour
 
         int winner = WinManager.Instance != null ? WinManager.Instance.PlayerWin : 0;
 
-        // base optimality (0..1). If no data, use neutral 0.5
         float opt = 0.5f;
         if (playerEval.minimaxValues.Count > 0)
         {
             opt = Mathf.Clamp01(playerEval.GetAverageOptimalityRatio());
         }
 
-        // depth factor: normalize by a typical depth (use 6 as cap)
         float avgDepth = playerEval.GetAverageMaxDepth();
         float depthFactor = (float)System.Math.Tanh(avgDepth / 6f);
 
-        // node factor: log-scaled
+    // 노드 수는 로그 스케일로 보정
         float avgNodes = playerEval.GetAverageNodeCount();
         float nodeFactor = Mathf.Clamp01(Mathf.Log10(avgNodes + 10f) / 3.0f);
 
-        // small relative advantage factor
+    // 상대적 이점 보정 항목
         float rel = 0f;
         if (npcEval != null && npcEval.minimaxValues.Count > 0 && playerEval.minimaxValues.Count > 0)
         {
@@ -414,30 +406,29 @@ public class UpdateWinner : MonoBehaviour
             rel = (float)System.Math.Tanh((p - n) / 6f);
         }
 
-        // combine base performance (0..1)
+    // 성능 지표들 결합(0..1)
         float performance = opt * 0.5f + depthFactor * 0.25f + nodeFactor * 0.18f + rel * 0.02f;
         performance = Mathf.Clamp01(performance);
 
-        // Adjust mapping by result type so draws get a generous score (around 5..10 depending on performance),
-        // wins get higher (6..10), losses still get a non-negative score (0..5) so leaderboard ordering works.
+    // 결과별(무승부/승/패)로 점수 범위 조정
         float score;
         if (winner == 0)
         {
-            // draw: base 7.0 up to 10.0 (generous)
+            // 무승부는 관대하게 7~10
             score = 7.0f + performance * 3.0f;
         }
         else if (winner == 1)
         {
-            // player win: base 7.5 up to 10.0
+            // 이기면 7.5~10
             score = 7.5f + performance * 2.5f;
         }
         else
         {
-            // player loss: minimum 1.0 up to 5.0 depending on performance
+            // 지면 최소 1점, 최대 5점
             score = 1.0f + performance * 4.0f;
         }
 
-        // round to 2 decimals and clamp 0..10
+    // 소수 둘째자리로 반올림하고 0..10 범위로 고정
         score = (float)System.Math.Round(score * 100f) / 100f;
         score = Mathf.Clamp(score, 0f, 10f);
 
